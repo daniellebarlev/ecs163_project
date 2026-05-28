@@ -1,37 +1,27 @@
-/*
-   GLOBAL COLOR TOKENS
-   Reference these variables anywhere in the project instead
-   of hardcoding hex values, so the palette stays consistent.
-*/
+/* global color variables - easier to change in one place than hunt through all the CSS */
 
 :root {
 
-  /* Abortion Law Border Colors ----------------------------
-     Used as the TILE BORDER color on the US map to encode
-     each state's abortion law category (4 levels).          */
-  --law-protective:     #1982C4;  /* Blue   — most permissive */
-  --law-some-limits:    #8AC926;  /* Green  — some restrictions */
-  --law-restrictive:    #FFCA3A;  /* Yellow — heavily restricted */
-  --law-near-total-ban: #FF595E;  /* Red    — near/total ban */
-  --law-accent:         #6A4C93;  /* Purple — reserved / 5th category if needed */
+  /* abortion law border colors (used on the map tiles) */
+  --law-protective:     #1982C4;  /* blue = most permissive */
+  --law-some-limits:    #8AC926;  /* green = some restrictions */
+  --law-restrictive:    #FFCA3A;  /* yellow = heavily restricted */
+  --law-near-total-ban: #FF595E;  /* red = near/total ban */
+  --law-accent:         #6A4C93;  /* purple - might use later */
 
-  /* Birth Rate Scale Colors -------------------------------
-     Used as the TILE FILL color on the US map.
-     Encodes birth rate as a sequential scale (dark = high).  */
-  --rate-5-highest: #461220;  /* Very dark maroon — highest birth rate */
-  --rate-4-high:    #8C2F39;  /* Dark red */
-  --rate-3-mid:     #B23A48;  /* Medium red */
-  --rate-2-low:     #FCB9B2;  /* Light pink */
-  --rate-1-lowest:  #FED0BB;  /* Pale peach — lowest birth rate */
+  /* birth rate fill colors for the map tiles (light to dark = low to high) */
+  --rate-5-highest: #461220;
+  --rate-4-high:    #8C2F39;
+  --rate-3-mid:     #B23A48;
+  --rate-2-low:     #FCB9B2;
+  --rate-1-lowest:  #FED0BB;
 
-  /* General Page / UI Colors ------------------------------
-     Used for backgrounds, panels, cards, and neutral surfaces.
-     Not for data encoding — decoration and layout only.      */
-  --bg-page:      #F5EBE0;  /* Warm cream — main page background */
-  --bg-secondary: #EDEDE9;  /* Soft off-white — secondary panels / sidebar */
-  --surface-1:    #E3D5CA;  /* Light warm tan — cards, tooltip backgrounds */
-  --surface-2:    #D6CCC2;  /* Warm gray — borders, dividers, subtle rules */
-  --surface-3:    #D5BDAF;  /* Medium warm brown — hover states, emphasis */
+  /* page background and surface colors */
+  --bg-page:      #F5EBE0;  /* main background */
+  --bg-secondary: #EDEDE9;
+  --surface-1:    #E3D5CA;  /* cards, tooltips */
+  --surface-2:    #D6CCC2;  /* borders, dividers */
+  --surface-3:    #D5BDAF;  /* hover states */
 }
 
 
@@ -52,10 +42,247 @@ html, body {
 
 .section-top {
   min-height: 100vh;
-  border: 1px solid #000;
+  background-color: var(--bg-page);
+  padding: 48px 48px 48px 48px;
 }
 
 .section-bottom {
   min-height: 100vh;
   border: 1px solid #000;
+}
+
+/* top-level two-column layout */
+
+.top-layout {
+  display: flex;
+  gap: 36px;
+  align-items: stretch;
+}
+
+.map-area {
+  flex: 3 1 0;
+  min-width: 0;
+}
+
+/* title / description block at the top */
+
+.page-header {
+  margin-bottom: 32px;
+}
+
+.map-title {
+  margin: 0 0 14px;
+  font-size: 56px;
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--rate-3-mid);
+}
+
+.map-desc {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #444;
+}
+
+.map-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+/* map + legend row */
+
+.map-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* wrapping map + slider together so the slider doesn't go wider than the map */
+.map-and-slider {
+  flex: 1;
+  min-width: 0;
+}
+
+#map-container {
+  width: 100%;
+}
+
+/* legend box beside the map */
+
+.map-legend {
+  flex-shrink: 0;
+  width: 160px;
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+/* fixed width/height so the page doesn't jump around when the year changes */
+#top-states {
+  width: 240px;
+  min-height: 220px;
+}
+
+.legend-group {
+  margin-bottom: 18px;
+}
+
+.legend-group:last-child {
+  margin-bottom: 0;
+}
+
+.legend-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.legend-gradient {
+  height: 12px;
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+
+.legend-gradient-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #888;
+}
+
+.legend-law-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #333;
+}
+
+.legend-swatch {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border: 3px solid;
+  border-radius: 3px;
+}
+
+/* right sidebar - holds the big year number and top states list */
+
+.stats-sidebar {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.map-year {
+  width: 240px;
+  font-size: 66px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--rate-3-mid);
+  letter-spacing: -3px;
+  margin-bottom: 20px;
+}
+
+.sidebar-heading {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888;
+  margin: 0 0 10px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.sidebar-item:last-child {
+  border-bottom: none;
+}
+
+.sidebar-rank {
+  font-size: 11px;
+  color: #bbb;
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.sidebar-state {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.sidebar-value {
+  margin-left: auto;
+  font-size: 12px;
+  color: #666;
+}
+
+.sidebar-note {
+  font-size: 10px;
+  color: #aaa;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* year slider */
+
+.slider-wrapper {
+  margin-top: 20px;
+  padding-right: 2px;
+}
+
+.year-slider {
+  width: 100%;
+  cursor: pointer;
+  accent-color: var(--rate-3-mid);
+  height: 6px;
+}
+
+.slider-ticks {
+  position: relative;
+  height: 20px;
+  margin-top: 4px;
+}
+
+.slider-ticks .tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #888;
+}
+
+/* tooltip that shows up on hover */
+
+.map-tooltip {
+  position: fixed;
+  background: var(--surface-1);
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.1s;
+  z-index: 10;
+}
+
+.map-tooltip.visible {
+  opacity: 1;
 }
