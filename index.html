@@ -10,17 +10,72 @@
   <body>
     <div class="container">
 
-      <!-- TODO: top-page section -->
+      <!-- top section: birth rate tile map -->
       <div class="section-top">
-        top-page
+
+        <!-- page title and description -->
+        <div class="page-header">
+          <h1 class="map-title">U.S. Birth Rates</h1>
+          <p class="map-desc">
+            The 1973 <em>Roe v. Wade</em> ruling guaranteed abortion access under federal
+            law for nearly 50 years. On June 24, 2022, the Supreme Court's
+            <em>Dobbs v. Jackson Women's Health</em> decision reversed that protection,
+            returning authority to individual states. This map tracks total births across
+            all 50 states from 1995–2024. Tile fill encodes birth volume; tile borders
+            show each state's abortion law category.
+          </p>
+          <p class="map-subtitle">per 1,000 women — drag the slider to explore year by year</p>
+        </div>
+
+        <div class="top-layout">
+
+          <!-- left side: map, legend, slider -->
+          <div class="map-area">
+
+            <div class="map-body">
+
+              <!-- map and slider wrapped together so the slider stays the same width as the map -->
+              <div class="map-and-slider">
+                <div id="map-container"></div>
+                <div class="slider-wrapper">
+                  <input type="range" id="year-slider" class="year-slider" />
+                  <div class="slider-ticks" id="slider-ticks"></div>
+                </div>
+              </div>
+
+              <!-- legend sits beside the map -->
+              <aside class="map-legend">
+                <div class="legend-group">
+                  <div class="legend-group-title">Birth rate</div>
+                  <div id="legend-rate"></div>
+                </div>
+                <div class="legend-group">
+                  <div class="legend-group-title">Border = abortion law</div>
+                  <div id="legend-law"></div>
+                </div>
+              </aside>
+
+            </div>
+
+          </div>
+
+          <!-- right side: big year display + top 5 states table -->
+          <aside class="stats-sidebar">
+            <div class="map-year" id="year-label">—</div>
+            <div id="top-states"></div>
+          </aside>
+
+        </div>
       </div>
 
-      <!-- TODO: bottom-page section -->
+      <!-- bottom section: labor force / death rate charts (TODO) -->
       <div class="section-bottom">
         bottom-page
       </div>
 
     </div>
+
+    <script src="map.js"></script>
     <script src="main.js"></script>
   </body>
 </html>
