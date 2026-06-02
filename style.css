@@ -3,10 +3,10 @@
 :root {
 
   /* abortion law border colors (used on the map tiles) */
-  --law-protective:     #1982C4;  /* blue = most permissive */
-  --law-some-limits:    #8AC926;  /* green = some restrictions */
-  --law-restrictive:    #FFCA3A;  /* yellow = heavily restricted */
-  --law-near-total-ban: #FF595E;  /* red = near/total ban */
+  --law-protective:     #2E7D32;  /* green = protective */
+  --law-some-limits:    #A5D6A7;  /* light green = some limits */
+  --law-restrictive:    #FB8C00;  /* orange = restrictive */
+  --law-near-total-ban: #7B1FA2;  /* purple = near/total ban */
   --law-accent:         #6A4C93;  /* purple - might use later */
 
   /* birth rate fill colors for the map tiles (light to dark = low to high) */
@@ -90,6 +90,39 @@ html, body {
   font-size: 12px;
   color: #999;
   font-style: italic;
+}
+
+/* fill-mode toggle inside the legend column */
+
+.fill-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fill-btn {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 10px;
+  text-align: left;
+  border: 1px solid var(--surface-2);
+  border-radius: 5px;
+  background: var(--bg-secondary);
+  color: #444;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.fill-btn:hover {
+  background: var(--surface-1);
+}
+
+.fill-btn.active {
+  background: var(--rate-3-mid);
+  border-color: var(--rate-3-mid);
+  color: #fff;
 }
 
 /* map + legend row */
