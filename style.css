@@ -3,10 +3,10 @@
 :root {
 
   /* abortion law border colors (used on the map tiles) */
-  --law-protective:     #1982C4;  /* blue = most permissive */
-  --law-some-limits:    #8AC926;  /* green = some restrictions */
-  --law-restrictive:    #FFCA3A;  /* yellow = heavily restricted */
-  --law-near-total-ban: #FF595E;  /* red = near/total ban */
+  --law-protective:     #2E7D32;  /* green = protective */
+  --law-some-limits:    #A5D6A7;  /* light green = some limits */
+  --law-restrictive:    #FB8C00;  /* orange = restrictive */
+  --law-near-total-ban: #7B1FA2;  /* purple = near/total ban */
   --law-accent:         #6A4C93;  /* purple - might use later */
 
   /* birth rate fill colors for the map tiles (light to dark = low to high) */
