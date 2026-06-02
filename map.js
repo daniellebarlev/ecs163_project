@@ -1,6 +1,6 @@
 // map.js
 // Draws the interactive US birth rate tile map using D3
-// Each state is a colored square, fill = birth count, border = abortion law status
+// Each state is a colored square, fill = birth rate (per 1,000 women aged 15-44), border = abortion law status
 
 // birth rate color scale (light = low births, dark = high births)
 const rate_colors = ['#FED0BB', '#FCB9B2', '#B23A48', '#8C2F39', '#461220'];
@@ -8,11 +8,12 @@ const rate_colors = ['#FED0BB', '#FCB9B2', '#B23A48', '#8C2F39', '#461220'];
 const rate_text_colors = ['#555', '#555', '#fff', '#fff', '#fff'];
 
 // border colors for each abortion law category
+// matches the green/light-green/orange/purple scheme from the proposal/progress report
 const law_colors = {
-  'protective': '#1982C4',
-  'some-limits': '#8AC926',
-  'restrictive': '#FFCA3A',
-  'near-total-ban': '#FF595E'
+  'protective': '#2E7D32',
+  'some-limits': '#A5D6A7',
+  'restrictive': '#FB8C00',
+  'near-total-ban': '#7B1FA2'
 };
 
 // readable labels for each abortion law category
@@ -65,6 +66,20 @@ const state_name_to_abbr = {
   'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH', 'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
   'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT', 'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV',
   'Wisconsin': 'WI', 'Wyoming': 'WY'
+};
+
+// female population aged 15-44 by state (approximate 2020 census values, in thousands)
+// used as the denominator to convert raw birth counts into "births per 1,000 women"
+// TODO: replace with year-varying Census ACS data so the denominator changes over time
+//       (held constant for now, which slightly distorts rates in early and late years)
+const state_pop_15_44 = {
+  'AL': 935,  'AK': 154,  'AZ': 1500, 'AR': 580,  'CA': 8050, 'CO': 1200, 'CT': 660,  'DE': 175,
+  'FL': 4040, 'GA': 2120, 'HI': 270,  'ID': 380,  'IL': 2515, 'IN': 1335, 'IA': 615,  'KS': 575,
+  'KY': 855,  'LA': 920,  'ME': 240,  'MD': 1180, 'MA': 1395, 'MI': 1900, 'MN': 1100, 'MS': 580,
+  'MO': 1185, 'MT': 195,  'NE': 390,  'NV': 625,  'NH': 250,  'NJ': 1740, 'NM': 410,  'NY': 3895,
+  'NC': 2020, 'ND': 155,  'OH': 2240, 'OK': 760,  'OR': 800,  'PA': 2455, 'RI': 215,  'SC': 985,
+  'SD': 175,  'TN': 1310, 'TX': 6160, 'UT': 695,  'VT': 115,  'VA': 1660, 'WA': 1490, 'WV': 340,
+  'WI': 1100, 'WY': 110
 };
 
 // abortion law data split into two periods:
@@ -122,6 +137,17 @@ function init_map(natality_data) {
     birth_data[abbr][year] += births;
   });
 
+  // convert raw birth totals into "births per 1,000 women aged 15-44"
+  // divides by the female reproductive-age population so large states don't dominate
+  Object.keys(birth_data).forEach(abbr => {
+    const pop = state_pop_15_44[abbr];
+    if (!pop) return; // skip states without a population entry (shouldn't happen, but just in case)
+    Object.keys(birth_data[abbr]).forEach(yr => {
+      // pop is in thousands so dividing gives births per 1,000 women directly
+      birth_data[abbr][yr] = birth_data[abbr][yr] / pop;
+    });
+  });
+
   // get the sorted list of all years in the dataset
   all_years = [...new Set(natality_data.map(d => +d['Year']))]
     .filter(y => !isNaN(y))
@@ -129,7 +155,7 @@ function init_map(natality_data) {
 
   current_year = all_years[0];
 
-  // collect all birth values to build the color scale
+  // collect all birth rate values to build the color scale
   const all_birth_values = [];
   Object.keys(birth_data).forEach(state => {
     Object.keys(birth_data[state]).forEach(yr => {
@@ -208,16 +234,16 @@ function draw_map() {
     .append('div')
     .attr('class', 'map-tooltip');
 
-  // show tooltip on hover with birth count and abortion law info for that state and year
+  // show tooltip on hover with birth rate and abortion law info for that state and year
   state_tiles.on('mouseover', function(event, d) {
-    const births = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
+    const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
     const cat = get_law_category(d.abbr, current_year);
 
     // position tooltip near mouse cursor and populate with info for the state when hovered
     tooltip.classed('visible', true)
       .html(
         `<strong>${d.abbr}</strong><br>` +
-        `${births != null ? births.toLocaleString() + ' births' : 'No data'}<br>` +
+        `${rate != null ? rate.toFixed(1) + ' per 1,000 women' : 'No data'}<br>` +
         `<span style="color:${law_colors[cat] || '#999'}">${law_labels[cat] || cat}</span>`
       );
   });
@@ -243,11 +269,14 @@ function draw_map() {
 function update_map() {
   if (!state_tiles) return;
 
-  // color each tile based on birth count for that state and year
+  // color each tile based on birth rate for that state and year
+  // smooth transition between years so color changes feel like motion, not a cut
   state_tiles.select('rect')
+    .transition()
+    .duration(200)
     .attr('fill', d => {
-      const births = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
-      return births != null ? color_scale(births) : '#ccc';
+      const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
+      return rate != null ? color_scale(rate) : '#ccc';
     })
     // set border color based on abortion law category for that state and year
     .attr('stroke', d => {
@@ -258,8 +287,8 @@ function update_map() {
   // make text white on dark tiles and dark on light tiles
   state_tiles.select('text')
     .attr('fill', d => {
-      const births = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
-      return births != null ? text_color_scale(births) : '#333';
+      const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
+      return rate != null ? text_color_scale(rate) : '#333';
     })
     .text(d => d.abbr);
 
@@ -270,37 +299,37 @@ function update_map() {
   update_top_states();
 }
 
-// updates the "Most Births" ranking on the right side of the page
+// updates the "Top 5 Birth Rates" ranking on the right side of the page
 function update_top_states() {
   const container = document.getElementById('top-states');
   if (!container) return;
 
-  // build a list of all states with birth data for this year
+  // build a list of all states with birth rate data for this year
   const state_list = state_grid.map(s => ({
     abbr: s.abbr,
-    births: birth_data[s.abbr] ? birth_data[s.abbr][current_year] : null
+    rate: birth_data[s.abbr] ? birth_data[s.abbr][current_year] : null
   }));
 
-  // sort by births and take the top 5
+  // sort by rate and take the top 5
   const top_5 = state_list
-    .filter(s => s.births != null)
-    .sort((a, b) => b.births - a.births)
+    .filter(s => s.rate != null)
+    .sort((a, b) => b.rate - a.rate)
     .slice(0, 5);
 
-  // builds the add-on description for Top 5 birth state throughout the years
-  let html = `<p class="sidebar-heading"> Top 5 Highest Births by State </p>`;
+  // builds the add-on description for Top 5 birth rate states throughout the years
+  let html = `<p class="sidebar-heading"> Top 5 Highest Birth Rates </p>`;
 
-  // add each of the top 5 states with birth count to sidebar
+  // add each of the top 5 states with birth rate to sidebar
   top_5.forEach((s, i) => {
     html += `<div class="sidebar-item">
       <span class="sidebar-rank">${i + 1}</span>
       <span class="sidebar-state">${s.abbr}</span>
-      <span class="sidebar-value">${s.births.toLocaleString()}</span>
+      <span class="sidebar-value">${s.rate.toFixed(1)}</span>
     </div>`;
   });
 
-  // add a note about what the birth counts represent and why some states might rank higher than others
-  html += `<p class="sidebar-note">Reflects total birth counts. Large states rank higher due to population size.</p>`;
+  // add a note explaining what the values represent
+  html += `<p class="sidebar-note">Births per 1,000 women aged 15-44. Higher rates indicate more births relative to the reproductive-age population.</p>`;
 
   container.innerHTML = html;
 }
