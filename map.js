@@ -589,3 +589,126 @@ function setup_fill_toggle() {
 
 // expose init_map globally so main.js can call it after loading the CSV
 const birth_rate_map = { init: init_map };
+
+//Draws three static maps for historical turning point years, 1995, 2008, and 2022
+
+//Birth rates per 1,000 women aged 15-4 from the final_natality_data.csv
+//using the same denominators from the above map
+const historicalSnapShotBirthRates = {
+  AK: {1995: 66.5, 2008: 74.3, 2022: 60.8}, AL: {1995: 64.5, 2008: 69.0, 2022: 62.2},
+  AR: {1995: 60.6, 2008: 70.1, 2022: 61.2}, AZ: {1995: 48.3, 2008: 66.3, 2022: 52.4},
+  CA: {1995: 68.6, 2008: 68.5, 2022: 52.1}, CO: {1995: 45.3, 2008: 58.4, 2022: 52.0},
+  CT: {1995: 67.2, 2008: 61.2, 2022: 53.5}, DE: {1995: 58.7, 2008: 69.1, 2022: 61.8},
+  FL: {1995: 46.7, 2008: 57.3, 2022: 55.6}, GA: {1995: 53.0, 2008: 69.2, 2022: 59.5},
+  HI: {1995: 68.9, 2008: 72.2, 2022: 57.5}, IA: {1995: 59.9, 2008: 65.4, 2022: 59.4},
+  ID: {1995: 47.5, 2008: 66.2, 2022: 58.9}, IL: {1995: 73.9, 2008: 70.3, 2022: 51.0},
+  IN: {1995: 62.0, 2008: 66.5, 2022: 59.7}, KS: {1995: 64.7, 2008: 72.8, 2022: 59.8},
+  KY: {1995: 61.3, 2008: 68.3, 2022: 61.2}, LA: {1995: 71.3, 2008: 70.9, 2022: 61.4},
+  MA: {1995: 58.5, 2008: 55.2, 2022: 49.2}, MD: {1995: 61.4, 2008: 65.5, 2022: 58.3},
+  ME: {1995: 57.9, 2008: 56.7, 2022: 50.4}, MI: {1995: 70.9, 2008: 63.8, 2022: 53.9},
+  MN: {1995: 57.5, 2008: 65.8, 2022: 58.2}, MO: {1995: 61.6, 2008: 68.3, 2022: 58.2},
+  MS: {1995: 71.3, 2008: 77.5, 2022: 59.8}, MT: {1995: 57.1, 2008: 64.6, 2022: 57.3},
+  NC: {1995: 50.3, 2008: 64.8, 2022: 60.2}, ND: {1995: 54.7, 2008: 57.7, 2022: 61.7},
+  NE: {1995: 59.6, 2008: 69.2, 2022: 62.4}, NH: {1995: 58.7, 2008: 54.7, 2022: 48.3},
+  NJ: {1995: 66.0, 2008: 64.8, 2022: 59.1}, NM: {1995: 65.7, 2008: 73.6, 2022: 52.7},
+  NV: {1995: 40.1, 2008: 63.2, 2022: 53.1}, NY: {1995: 69.7, 2008: 64.3, 2022: 53.3},
+  OH: {1995: 68.8, 2008: 66.4, 2022: 57.2}, OK: {1995: 60.1, 2008: 72.1, 2022: 63.6},
+  OR: {1995: 53.5, 2008: 61.4, 2022: 49.4}, PA: {1995: 61.9, 2008: 60.8, 2022: 53.1},
+  RI: {1995: 59.4, 2008: 56.0, 2022: 47.8}, SC: {1995: 51.7, 2008: 64.0, 2022: 58.7},
+  SD: {1995: 59.9, 2008: 69.0, 2022: 64.0}, TN: {1995: 55.9, 2008: 65.3, 2022: 62.8},
+  TX: {1995: 52.4, 2008: 65.8, 2022: 63.3}, UT: {1995: 56.9, 2008: 80.0, 2022: 65.9},
+  VA: {1995: 55.8, 2008: 64.3, 2022: 57.6}, VT: {1995: 59.0, 2008: 55.1, 2022: 46.2},
+  WA: {1995: 51.8, 2008: 60.6, 2022: 55.9}, WI: {1995: 61.3, 2008: 65.7, 2022: 54.6},
+  WV: {1995: 62.2, 2008: 63.2, 2022: 49.8}, WY: {1995: 56.9, 2008: 73.1, 2022: 55.0},
+};
+
+const historicalSnapshotPanels = [{
+    year: 1995,
+    container_id: 'historical-years-snapshot-map-1995'
+  },
+  {
+    year: 2008,
+    container_id: 'historical-years-snapshot-map-2008'
+  },
+  {
+    year: 2022,
+    container_id: 'historical-years-snapshot-map-2022'
+  }]; // getting the id tags (same as the html)
+
+function drawingTheSnapshotMaps() {
+  const allValues = [];
+  const usStates = Object.keys(historicalSnapShotBirthRates);
+
+  for (let i = 0; i < usStates.length; ++i) {
+    const stateYears = Object.keys(historicalSnapShotBirthRates[usStates[i]]);
+
+    for (let j = 0; j < stateYears.length; ++j) { 
+      allValues.push(historicalSnapShotBirthRates[usStates[i]][stateYears[j]]);
+    }
+  } // putting all the values into an array
+
+  const createColorScaleForStaticMaps = d3.scaleQuantile()
+    .domain(allValues)
+    .range(rate_colors); // making the color scale for the map
+
+  const createColorScaleForTileText = d3.scaleQuantile()
+    .domain(allValues)
+    .range(rate_text_colors); //making the color scale for the Borders
+
+  for (let pi = 0; pi < historicalSnapshotPanels.length; ++pi) { // iterating through the 3 panels
+    const snapshot = historicalSnapshotPanels[pi]; //getting the specific time panel
+    const container = document.getElementById(snapshot.container_id); // getting the element id of the panel
+    const tile_size = 50; 
+    const gap = 5; // gap between the tiles
+    const step = tile_size + gap;
+    const columns = 15;
+    const rows = 8;
+    const width = columns * step;
+    const height = rows * step;
+    const padding = 5;
+
+    const svg = d3.select(container)
+      .append("svg")
+      .attr("viewBox",`-${padding} -${padding} ${width + padding * 2} ${height + padding * 2}`)
+      .attr("preserveAspectRatio", "xMidYMid meet")
+      .style("width", "100%"); // making sure everything is properly sized
+
+    const g = svg.append("g");
+
+    for (let stateIndex = 0; stateIndex < state_grid.length; ++stateIndex) { // iterating through every state in state_grid
+      const state = state_grid[stateIndex]; // gets the current state
+      let check = historicalSnapShotBirthRates[state.abbr][snapshot.year]; // gets the birth rate for each state to the corrsponding year
+      const combine = get_law_category(state.abbr, snapshot.year); // calling the helper function to return the abortion policy, state, and year
+      let fillColor = createColorScaleForStaticMaps(check); // filling the maps with the appropriate colors
+      let strokeColor = law_colors[combine]; // making the border color the category color
+      let textFill = createColorScaleForTileText(check); // making the text in the panels white so that it readable
+    
+      const makeTile = g.append("g")
+        .attr('class', 'snap-tile')
+        .attr("transform", `translate(${state.col * step}, ${state.row * step})`);
+    
+      makeTile.append("rect")
+        .attr("width", tile_size)
+        .attr("height", tile_size)
+        .attr("rx", 4)
+        .attr("ry", 4)
+        .attr("stroke-width", 4)
+        .attr("fill", fillColor)
+        .attr("stroke", strokeColor); // adding the heat rectangles for each map
+    
+      makeTile.append("text")
+        .attr("x", tile_size / 2)
+        .attr("y", tile_size / 2 + 1)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("font-size", "11px")
+        .attr("font-family", "sans-serif")
+        .attr("font-weight", "bold")
+        .attr("pointer-events", "none")
+        .attr("fill", textFill)
+        .text(state.abbr); // adding the text to each rectangle
+    }
+  }
+}
+
+drawingTheSnapshotMaps();
