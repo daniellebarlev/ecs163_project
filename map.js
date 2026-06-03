@@ -7,6 +7,42 @@ const rate_colors = ['#FED0BB', '#FCB9B2', '#B23A48', '#8C2F39', '#461220'];
 // make sure text colors over the tiles are readable when colors change through the gradient
 const rate_text_colors = ['#555', '#555', '#fff', '#fff', '#fff'];
 
+// labor force color scale (blue gradient, light = low participation, dark = high)
+const labor_colors = ['#E3F2FD', '#90CAF9', '#42A5F5', '#1E88E5', '#1565C0'];
+const labor_text_colors = ['#555', '#555', '#fff', '#fff', '#fff'];
+
+// education color scale (teal gradient, light = low attainment, dark = high)
+const education_colors = ['#E0F2F1', '#80CBC4', '#26A69A', '#00897B', '#00695C'];
+const education_text_colors = ['#555', '#555', '#fff', '#fff', '#fff'];
+
+// metadata for each fill mode — keeps the toggle/legend/tooltip logic in one place
+const fill_modes = {
+  'birth-rate': {
+    label: 'Birth Rate',
+    legend_title: 'Birth rate',
+    tooltip_unit: 'per 1,000 women',
+    value_format: v => v.toFixed(1),
+    sidebar_heading: 'Top 5 Highest Birth Rates',
+    sidebar_note: 'Births per 1,000 women aged 15-44. Higher rates indicate more births relative to the reproductive-age population.'
+  },
+  'labor-force': {
+    label: 'Labor Force',
+    legend_title: 'Labor force participation',
+    tooltip_unit: '% participation',
+    value_format: v => v.toFixed(1) + '%',
+    sidebar_heading: 'Top 5 Highest Labor Force Participation',
+    sidebar_note: 'Share of working-age women in the labor force (employed or actively seeking work). Source: FRED.'
+  },
+  'education': {
+    label: 'Education',
+    legend_title: "Women with bachelor's degree",
+    tooltip_unit: '% with bachelors',
+    value_format: v => v.toFixed(1) + '%',
+    sidebar_heading: "Top 5 Highest Bachelor's Attainment",
+    sidebar_note: "Share of women aged 25+ with a bachelor's degree or higher. Static 2020 snapshot — does not vary by year yet."
+  }
+};
+
 // border colors for each abortion law category
 // matches the green/light-green/orange/purple scheme from the proposal/progress report
 const law_colors = {
@@ -82,44 +118,117 @@ const state_pop_15_44 = {
   'WI': 1100, 'WY': 110
 };
 
-// abortion law data split into two periods:
-// before Dobbs (Roe v. Wade was still law) and after Dobbs (2022+)
-// REPLACE WITH ACTUAL DATASET WITH THE CORRECT LABELS, THIS IS A PLACEHOLDER JUST TO SEE IF THE BOARDERS WORK
-const pre_dobbs = {
-  'protective': ['CA','CO','CT','DE','HI','IL','MA','MD','ME','MN','NJ','NM','NY','OR','VT','WA'],
-  'some-limits': ['AK','AZ','FL','GA','IA','IN','KS','KY','LA','MI','MO','MS','MT','NC','ND','NE','NH','NV','OH','OK','PA','RI','SC','SD','TN','TX','UT','VA','WI','WV','WY'],
-  'restrictive': ['AL','AR','ID'],
-  'near-total-ban': []
+// approximate share of women aged 25+ with a bachelor's degree or higher (percent)
+// static snapshot based on ~2020 Census ACS estimates
+// TODO: replace with year-varying World Population Review / Census ACS data so the
+//       education overlay actually changes across the scrubber's 30-year range
+const education_attainment = {
+  'AL': 27.5, 'AK': 31.2, 'AZ': 31.5, 'AR': 24.5, 'CA': 36.0, 'CO': 43.5, 'CT': 41.5, 'DE': 34.2,
+  'FL': 32.5, 'GA': 33.7, 'HI': 35.5, 'ID': 30.2, 'IL': 37.7, 'IN': 28.5, 'IA': 31.0, 'KS': 35.0,
+  'KY': 26.0, 'LA': 26.5, 'ME': 35.5, 'MD': 42.5, 'MA': 47.5, 'MI': 31.5, 'MN': 39.5, 'MS': 24.5,
+  'MO': 32.0, 'MT': 35.0, 'NE': 34.0, 'NV': 27.0, 'NH': 40.5, 'NJ': 42.0, 'NM': 30.5, 'NY': 39.5,
+  'NC': 34.5, 'ND': 32.0, 'OH': 30.5, 'OK': 27.5, 'OR': 37.0, 'PA': 35.0, 'RI': 36.5, 'SC': 31.0,
+  'SD': 31.5, 'TN': 30.5, 'TX': 33.5, 'UT': 36.0, 'VT': 41.0, 'VA': 42.0, 'WA': 39.5, 'WV': 22.5,
+  'WI': 32.5, 'WY': 30.5
 };
 
-// REPLACE WITH ACTUAL DATASET WITH THE CORRECT LABELS, THIS IS A PLACEHOLDER JUST TO SEE IF THE BOARDERS WORK
-const post_dobbs = {
-  'protective': ['CA','CO','CT','DE','HI','IL','MA','MD','ME','MN','NJ','NM','NY','OR','RI','VT','WA'],
-  'some-limits': ['AK','KS','NH','NV','PA','VA'],
-  'restrictive': ['AZ','FL','GA','IA','MT','NC','NE','OH','SC','UT'],
-  'near-total-ban': ['AL','AR','ID','IN','KY','LA','MI','MO','MS','ND','OK','SD','TN','TX','WI','WV','WY']
+// abortion law data structured as year-varying periods per state
+// each state has an array of [start_year, category] tuples in chronological order
+// the lookup finds the latest entry where start_year <= the requested year
+// NOTE: these categorizations are approximate based on broad historical patterns
+// (Roe-era restrictions, the 2011+ TRAP-law wave, Dobbs trigger laws in 2022).
+// TODO: replace with the actual LawAtlas dataset once it's cleaned per state-year.
+const law_data = {
+  // West / Pacific
+  'CA': [[1995, 'protective']],
+  'OR': [[1995, 'protective']],
+  'WA': [[1995, 'protective']],
+  'HI': [[1995, 'protective']],
+  'AK': [[1995, 'protective']],
+
+  // Northeast
+  'CT': [[1995, 'protective']],
+  'MA': [[1995, 'protective']],
+  'NY': [[1995, 'protective']],
+  'NJ': [[1995, 'protective']],
+  'VT': [[1995, 'protective']],
+  'ME': [[1995, 'some-limits'], [2019, 'protective']],
+  'RI': [[1995, 'some-limits'], [2019, 'protective']],
+  'NH': [[1995, 'some-limits']],
+
+  // Mid-Atlantic
+  'MD': [[1995, 'protective']],
+  'DE': [[1995, 'some-limits'], [2017, 'protective']],
+  'PA': [[1995, 'some-limits']],
+  'VA': [[1995, 'some-limits'], [2020, 'protective']],
+  'WV': [[1995, 'some-limits'], [2022, 'near-total-ban']],
+
+  // Upper Midwest
+  'IL': [[1995, 'some-limits'], [2017, 'protective']],
+  'MN': [[1995, 'some-limits'], [2023, 'protective']],
+  'WI': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban'], [2023, 'restrictive']],
+  'MI': [[1995, 'some-limits'], [2022, 'restrictive'], [2023, 'protective']],
+  'IA': [[1995, 'some-limits'], [2017, 'restrictive']],
+  'OH': [[1995, 'some-limits'], [2011, 'restrictive']],
+  'IN': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+
+  // Mountain / Plains
+  'AZ': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban'], [2024, 'restrictive']],
+  'UT': [[1995, 'some-limits'], [2011, 'restrictive']],
+  'NM': [[1995, 'some-limits'], [2021, 'protective']],
+  'CO': [[1995, 'some-limits'], [2022, 'protective']],
+  'NV': [[1995, 'some-limits'], [2019, 'protective']],
+  'WY': [[1995, 'some-limits'], [2011, 'restrictive']],
+  'MT': [[1995, 'some-limits'], [2023, 'restrictive']],
+  'ID': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'ND': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'SD': [[1995, 'some-limits'], [2005, 'restrictive'], [2022, 'near-total-ban']],
+  'NE': [[1995, 'some-limits'], [2010, 'restrictive']],
+  'KS': [[1995, 'some-limits'], [2011, 'restrictive']],
+
+  // South
+  'TX': [[1995, 'some-limits'], [2003, 'restrictive'], [2022, 'near-total-ban']],
+  'OK': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'AR': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'LA': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'MS': [[1995, 'restrictive'], [2022, 'near-total-ban']],
+  'AL': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'TN': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'KY': [[1995, 'some-limits'], [2011, 'restrictive'], [2022, 'near-total-ban']],
+  'NC': [[1995, 'some-limits'], [2013, 'restrictive']],
+  'SC': [[1995, 'some-limits'], [2011, 'restrictive']],
+  'GA': [[1995, 'some-limits'], [2011, 'restrictive']],
+  'FL': [[1995, 'some-limits'], [2022, 'restrictive']],
+  'MO': [[1995, 'restrictive'], [2022, 'near-total-ban']]
 };
 
 // returns the abortion law category string for a given state and year
 function get_law_category(abbr, year) {
-  const laws = year >= 2022 ? post_dobbs : pre_dobbs;
-  for (const category in laws) {
-    if (laws[category].includes(abbr)) return category;
+  const history = law_data[abbr];
+  if (!history) return 'unknown';
+  // periods are sorted ascending, so walk forward until start_year exceeds the requested year
+  let category = history[0][1];
+  for (const [start_year, cat] of history) {
+    if (start_year <= year) category = cat;
+    else break;
   }
-  return 'unknown';
+  return category;
 }
 
 // global variables used across functions
-let birth_data = {}; // { stateAbbr: { year: totalBirths } }
+let birth_data = {}; // { stateAbbr: { year: birthRate } }
+let labor_data = {}; // { stateAbbr: { year: participationPct } }
+let edu_data = {};   // { stateAbbr: { year: bachelorsPct } }
 let all_years = [];
 let current_year;
-let color_scale;
-let text_color_scale;
+let current_fill = 'birth-rate'; // which dataset drives the tile fill ('birth-rate' | 'labor-force' | 'education')
+let scales = {}; // { 'birth-rate': {color, text}, 'labor-force': {color, text}, 'education': {color, text} }
 let state_tiles; // d3 selection of all state tile groups
 
 // called from main.js once both CSVs are loaded
-function init_map(natality_data) {
+function init_map(natality_data, labor_force_data) {
   console.log('loaded natality data:', natality_data.length, 'rows');
+  console.log('loaded labor force data:', labor_force_data.length, 'rows');
 
   // aggregate births by state and year
   // the CSV has multiple rows per state/year (one per education level) so we sum them
@@ -148,33 +257,60 @@ function init_map(natality_data) {
     });
   });
 
-  // get the sorted list of all years in the dataset
+  // labor force CSV is in wide format: one row per year, one column per state
+  // reshape it into the same { abbr: { year: value } } shape as birth_data so everything downstream is uniform
+  labor_force_data.forEach(row => {
+    const year = +row['Date'];
+    if (isNaN(year)) return;
+    Object.keys(row).forEach(state_name => {
+      if (state_name === 'Date') return;
+      const abbr = state_name_to_abbr[state_name];
+      const val = +row[state_name];
+      if (!abbr || isNaN(val)) return;
+      if (!labor_data[abbr]) labor_data[abbr] = {};
+      labor_data[abbr][year] = val;
+    });
+  });
+
+  // get the sorted list of all years in the dataset (using natality as the canonical range)
   all_years = [...new Set(natality_data.map(d => +d['Year']))]
     .filter(y => !isNaN(y))
     .sort((a, b) => a - b);
 
   current_year = all_years[0];
 
-  // collect all birth rate values to build the color scale
-  const all_birth_values = [];
-  Object.keys(birth_data).forEach(state => {
-    Object.keys(birth_data[state]).forEach(yr => {
-      all_birth_values.push(birth_data[state][yr]);
+  // education data is currently a static lookup — populate it as state x year so update_map can stay generic
+  // every year gets the same value until year-varying data is wired in
+  Object.keys(education_attainment).forEach(abbr => {
+    edu_data[abbr] = {};
+    all_years.forEach(yr => {
+      edu_data[abbr][yr] = education_attainment[abbr];
     });
   });
 
-  // quantile scale splits data into equal-sized buckets for each color and text color as well
-  color_scale = d3.scaleQuantile()
-    .domain(all_birth_values)
-    .range(rate_colors);
-
-  text_color_scale = d3.scaleQuantile()
-    .domain(all_birth_values)
-    .range(rate_text_colors);
+  // build color + text scales for each fill mode using the same quantile-bucketing approach
+  scales['birth-rate']  = make_scales(birth_data, rate_colors, rate_text_colors);
+  scales['labor-force'] = make_scales(labor_data, labor_colors, labor_text_colors);
+  scales['education']   = make_scales(edu_data, education_colors, education_text_colors);
 
   draw_map();
   draw_legend();
   setup_slider();
+  setup_fill_toggle();
+}
+
+// helper: builds a {color, text} pair of quantile scales over all values in a state x year dataset
+function make_scales(dataset, color_range, text_range) {
+  const values = [];
+  Object.keys(dataset).forEach(abbr => {
+    Object.keys(dataset[abbr]).forEach(yr => {
+      values.push(dataset[abbr][yr]);
+    });
+  });
+  return {
+    color: d3.scaleQuantile().domain(values).range(color_range),
+    text:  d3.scaleQuantile().domain(values).range(text_range)
+  };
 }
 
 // creates the SVG and draws all state tiles
@@ -234,16 +370,18 @@ function draw_map() {
     .append('div')
     .attr('class', 'map-tooltip');
 
-  // show tooltip on hover with birth rate and abortion law info for that state and year
+  // show tooltip on hover with the active fill's value and abortion law info for that state and year
   state_tiles.on('mouseover', function(event, d) {
-    const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
+    const ds = active_dataset();
+    const val = ds[d.abbr] ? ds[d.abbr][current_year] : null;
+    const mode = fill_modes[current_fill];
     const cat = get_law_category(d.abbr, current_year);
 
     // position tooltip near mouse cursor and populate with info for the state when hovered
     tooltip.classed('visible', true)
       .html(
         `<strong>${d.abbr}</strong><br>` +
-        `${rate != null ? rate.toFixed(1) + ' per 1,000 women' : 'No data'}<br>` +
+        `${val != null ? mode.value_format(val) + ' ' + mode.tooltip_unit : 'No data'}<br>` +
         `<span style="color:${law_colors[cat] || '#999'}">${law_labels[cat] || cat}</span>`
       );
   });
@@ -264,19 +402,24 @@ function draw_map() {
   update_map();
 }
 
-// re-colors all tiles based on the current year
-// called on initial draw and whenever the slider moves
+// re-colors all tiles based on the current year and active fill mode
+// called on initial draw, whenever the slider moves, and whenever the fill toggle changes
 function update_map() {
   if (!state_tiles) return;
 
-  // color each tile based on birth rate for that state and year
+  // pick the dataset + scales for the active fill mode
+  const ds = active_dataset();
+  const scale = scales[current_fill].color;
+  const text_scale = scales[current_fill].text;
+
+  // color each tile based on the active variable's value for that state and year
   // smooth transition between years so color changes feel like motion, not a cut
   state_tiles.select('rect')
     .transition()
     .duration(200)
     .attr('fill', d => {
-      const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
-      return rate != null ? color_scale(rate) : '#ccc';
+      const val = ds[d.abbr] ? ds[d.abbr][current_year] : null;
+      return val != null ? scale(val) : '#ccc';
     })
     // set border color based on abortion law category for that state and year
     .attr('stroke', d => {
@@ -287,8 +430,8 @@ function update_map() {
   // make text white on dark tiles and dark on light tiles
   state_tiles.select('text')
     .attr('fill', d => {
-      const rate = birth_data[d.abbr] ? birth_data[d.abbr][current_year] : null;
-      return rate != null ? text_color_scale(rate) : '#333';
+      const val = ds[d.abbr] ? ds[d.abbr][current_year] : null;
+      return val != null ? text_scale(val) : '#333';
     })
     .text(d => d.abbr);
 
@@ -299,37 +442,47 @@ function update_map() {
   update_top_states();
 }
 
-// updates the "Top 5 Birth Rates" ranking on the right side of the page
+// helper: returns the dataset object that corresponds to the active fill mode
+function active_dataset() {
+  if (current_fill === 'labor-force') return labor_data;
+  if (current_fill === 'education')   return edu_data;
+  return birth_data;
+}
+
+// updates the "Top 5" ranking on the right side of the page based on the active fill mode
 function update_top_states() {
   const container = document.getElementById('top-states');
   if (!container) return;
 
-  // build a list of all states with birth rate data for this year
+  const ds = active_dataset();
+  const mode = fill_modes[current_fill];
+
+  // build a list of all states with data for this year/fill
   const state_list = state_grid.map(s => ({
     abbr: s.abbr,
-    rate: birth_data[s.abbr] ? birth_data[s.abbr][current_year] : null
+    val: ds[s.abbr] ? ds[s.abbr][current_year] : null
   }));
 
-  // sort by rate and take the top 5
+  // sort by value and take the top 5
   const top_5 = state_list
-    .filter(s => s.rate != null)
-    .sort((a, b) => b.rate - a.rate)
+    .filter(s => s.val != null)
+    .sort((a, b) => b.val - a.val)
     .slice(0, 5);
 
-  // builds the add-on description for Top 5 birth rate states throughout the years
-  let html = `<p class="sidebar-heading"> Top 5 Highest Birth Rates </p>`;
+  // builds the sidebar list using the heading/format from the active fill mode
+  let html = `<p class="sidebar-heading"> ${mode.sidebar_heading} </p>`;
 
-  // add each of the top 5 states with birth rate to sidebar
+  // add each of the top 5 states with the appropriate formatted value
   top_5.forEach((s, i) => {
     html += `<div class="sidebar-item">
       <span class="sidebar-rank">${i + 1}</span>
       <span class="sidebar-state">${s.abbr}</span>
-      <span class="sidebar-value">${s.rate.toFixed(1)}</span>
+      <span class="sidebar-value">${mode.value_format(s.val)}</span>
     </div>`;
   });
 
-  // add a note explaining what the values represent
-  html += `<p class="sidebar-note">Births per 1,000 women aged 15-44. Higher rates indicate more births relative to the reproductive-age population.</p>`;
+  // add a note explaining what the values represent for this fill mode
+  html += `<p class="sidebar-note">${mode.sidebar_note}</p>`;
 
   container.innerHTML = html;
 }
@@ -369,17 +522,9 @@ function setup_slider() {
   });
 }
 
-// draws the legend (birth rate bar + law color key)
+// draws the legend (fill-mode gradient bar + law color key) and stores hooks for live updates
 function draw_legend() {
-  // gradient bar showing the birth rate color range
-  const birth_rate_legend = document.getElementById('legend-rate');
-  if (birth_rate_legend) {
-    birth_rate_legend.innerHTML =
-      `<div class="legend-gradient" style="background: linear-gradient(to right, ${rate_colors.join(', ')})"></div>` +
-      `<div class="legend-gradient-labels"><span>lower</span><span>higher</span></div>`;
-  }
-
-  // colored squares showing each abortion law category
+  // the law color key only needs to be drawn once — it doesn't change with the fill mode
   const abortion_law_legend = document.getElementById('legend-law');
   if (abortion_law_legend) {
     Object.keys(law_colors).forEach(cat => {
@@ -391,6 +536,55 @@ function draw_legend() {
       abortion_law_legend.appendChild(item);
     });
   }
+
+  // the fill gradient bar swaps colors when the toggle changes, so draw it through update_legend
+  update_legend();
+}
+
+// updates the fill-rate legend section (gradient + title) for the active fill mode
+function update_legend() {
+  const mode = fill_modes[current_fill];
+
+  // swap the legend group title to match the active variable
+  const group_title = document.getElementById('legend-rate-title');
+  if (group_title) group_title.textContent = mode.legend_title;
+
+  // pick the color ramp that matches the active fill
+  const ramp =
+    current_fill === 'labor-force' ? labor_colors :
+    current_fill === 'education'   ? education_colors :
+                                     rate_colors;
+
+  // gradient bar showing the active variable's color range
+  const birth_rate_legend = document.getElementById('legend-rate');
+  if (birth_rate_legend) {
+    birth_rate_legend.innerHTML =
+      `<div class="legend-gradient" style="background: linear-gradient(to right, ${ramp.join(', ')})"></div>` +
+      `<div class="legend-gradient-labels"><span>lower</span><span>higher</span></div>`;
+  }
+}
+
+// wires up the three fill-mode buttons (Birth Rate / Labor Force / Education)
+// clicking one swaps the active dataset, recolors the map, and updates the legend + sidebar
+function setup_fill_toggle() {
+  const buttons = document.querySelectorAll('.fill-btn');
+  if (!buttons.length) return;
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const target = btn.getAttribute('data-fill');
+      if (!target || target === current_fill) return;
+
+      current_fill = target;
+
+      // update which button looks active
+      buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+      // redraw map + legend with the new fill
+      update_map();
+      update_legend();
+    });
+  });
 }
 
 // expose init_map globally so main.js can call it after loading the CSV

@@ -46,8 +46,17 @@
 
               <!-- legend sits beside the map -->
               <aside class="map-legend">
+                <!-- fill-mode toggle: swaps the tile fill between birth rate, labor force, and education -->
                 <div class="legend-group">
-                  <div class="legend-group-title">Birth rate</div>
+                  <div class="legend-group-title">Map fill</div>
+                  <div class="fill-toggle">
+                    <button class="fill-btn active" data-fill="birth-rate">Birth Rate</button>
+                    <button class="fill-btn" data-fill="labor-force">Labor Force</button>
+                    <button class="fill-btn" data-fill="education">Education</button>
+                  </div>
+                </div>
+                <div class="legend-group">
+                  <div class="legend-group-title" id="legend-rate-title">Birth rate</div>
                   <div id="legend-rate"></div>
                 </div>
                 <div class="legend-group">
