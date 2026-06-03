@@ -46,10 +46,6 @@ html, body {
   padding: 48px 48px 48px 48px;
 }
 
-.section-bottom {
-  min-height: 100vh;
-  border: 1px solid #000;
-}
 
 /* top-level two-column layout */
 
@@ -318,4 +314,78 @@ html, body {
 
 .map-tooltip.visible {
   opacity: 1;
+}
+/* static map section*/
+
+.historical-years-snapshot {
+  background-color: var(--bg-page);
+  padding: 50px 50px 65px;
+}
+
+.historical-years-snapshot-header {
+  margin-bottom: 40px;
+}
+
+.historical-years-snapshot-title {
+  margin: 0 0 8px;
+  font-size: 50px;
+  font-weight: 1000;
+  color: var(--rate-3-mid);
+}
+
+.historical-years-snapshot-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color:#444;
+  max-width: 680px;
+}
+
+.historical-years-snapshot-row {
+  display:flex;
+  gap: 25px;
+}
+
+.historical-years-snapshot-panel {
+  flex: 1 1 0;
+}
+
+.historical-years-snapshot-arrow {
+  display: flex;
+  align-items: center;
+  color: #aaa;
+  font-size: 30px;
+}
+
+.historical-years-snapshot-label {
+  font-size: 50px;
+  font-weight: 1000;
+  letter-spacing: -1px;
+  color: var(--rate-3-mid);
+  margin-bottom: 10px;
+}
+
+.historical-years-snapshots-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 7px;
+  border-radius: 4px;
+  background: #1a1a1a;
+  color: #fff;
+  margin-bottom: 15px;
+}
+
+.historical-years-snapshot svg {
+  width: 100%;
+  height: auto;
+}
+
+.historical-years-snapshot-notes {
+  font-size: 15px;
+  color:#999;
+  margin-top: 12px;
+  line-height: 1.4;
+  font-style: italic;
 }
