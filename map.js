@@ -39,7 +39,7 @@ const fill_modes = {
     tooltip_unit: "with bachelor's",
     value_format: v => v.toFixed(1) + '%',
     sidebar_heading: "Top 5 Highest Bachelor's Attainment",
-    sidebar_note: "Share of women aged 25+ with a bachelor's degree or higher. Static 2020 snapshot — does not vary by year yet."
+    sidebar_note: "Share of women aged 25+ with a bachelor's degree or higher."
   }
 };
 
