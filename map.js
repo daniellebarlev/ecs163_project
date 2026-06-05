@@ -104,6 +104,10 @@ const state_name_to_abbr = {
   'Wisconsin': 'WI', 'Wyoming': 'WY'
 };
 
+const abbr_to_state_name = Object.fromEntries(
+  Object.entries(state_name_to_abbr).map(([name, abbr]) => [abbr, name])
+);
+
 // female population aged 15-44 by state (approximate 2020 census values, in thousands)
 // used as the denominator to convert raw birth counts into "births per 1,000 women"
 // TODO: replace with year-varying Census ACS data so the denominator changes over time
@@ -121,16 +125,6 @@ const state_pop_15_44 = {
 // approximate share of women aged 25+ with a bachelor's degree or higher (percent)
 // static snapshot based on ~2020 Census ACS estimates
 // TODO: replace with year-varying World Population Review / Census ACS data so the
-//       education overlay actually changes across the scrubber's 30-year range
-const education_attainment = {
-  'AL': 27.5, 'AK': 31.2, 'AZ': 31.5, 'AR': 24.5, 'CA': 36.0, 'CO': 43.5, 'CT': 41.5, 'DE': 34.2,
-  'FL': 32.5, 'GA': 33.7, 'HI': 35.5, 'ID': 30.2, 'IL': 37.7, 'IN': 28.5, 'IA': 31.0, 'KS': 35.0,
-  'KY': 26.0, 'LA': 26.5, 'ME': 35.5, 'MD': 42.5, 'MA': 47.5, 'MI': 31.5, 'MN': 39.5, 'MS': 24.5,
-  'MO': 32.0, 'MT': 35.0, 'NE': 34.0, 'NV': 27.0, 'NH': 40.5, 'NJ': 42.0, 'NM': 30.5, 'NY': 39.5,
-  'NC': 34.5, 'ND': 32.0, 'OH': 30.5, 'OK': 27.5, 'OR': 37.0, 'PA': 35.0, 'RI': 36.5, 'SC': 31.0,
-  'SD': 31.5, 'TN': 30.5, 'TX': 33.5, 'UT': 36.0, 'VT': 41.0, 'VA': 42.0, 'WA': 39.5, 'WV': 22.5,
-  'WI': 32.5, 'WY': 30.5
-};
 
 // abortion law data structured as year-varying periods per state
 // each state has an array of [start_year, category] tuples in chronological order
@@ -279,12 +273,38 @@ function init_map(natality_data, labor_force_data) {
 
   current_year = all_years[0];
 
-  // education data is currently a static lookup — populate it as state x year so update_map can stay generic
-  // every year gets the same value until year-varying data is wired in
-  Object.keys(education_attainment).forEach(abbr => {
+  // compute education metric from natality data:
+  // for each state+year, % of births where mother had 16+ years of education (bachelor's or higher)
+  const edu_total = {}; // { abbr: { year: totalValidBirths } }
+  const edu_college = {}; // { abbr: { year: birthsWithCollegeDegree } }
+
+  natality_data.forEach(d => {
+    const abbr = state_name_to_abbr[d['State']];
+    const year = +d['Year'];
+    const births = +d['Births'];
+    const edu_level = d["Mother's Education"];
+
+    if (!abbr || isNaN(year) || isNaN(births)) return;
+    // skip non-informative rows
+    if (edu_level === 'Not stated/Not on certificate' || edu_level === 'Excluded') return;
+
+    if (!edu_total[abbr]) edu_total[abbr] = {};
+    if (!edu_total[abbr][year]) edu_total[abbr][year] = 0;
+    edu_total[abbr][year] += births;
+
+    if (edu_level === '16 years and over') {
+      if (!edu_college[abbr]) edu_college[abbr] = {};
+      if (!edu_college[abbr][year]) edu_college[abbr][year] = 0;
+      edu_college[abbr][year] += births;
+    }
+  });
+
+  Object.keys(edu_total).forEach(abbr => {
     edu_data[abbr] = {};
-    all_years.forEach(yr => {
-      edu_data[abbr][yr] = education_attainment[abbr];
+    Object.keys(edu_total[abbr]).forEach(yr => {
+      const total = edu_total[abbr][yr];
+      const college = (edu_college[abbr] && edu_college[abbr][yr]) || 0;
+      edu_data[abbr][yr] = total > 0 ? (college / total) * 100 : 0;
     });
   });
 
@@ -380,9 +400,9 @@ function draw_map() {
     // position tooltip near mouse cursor and populate with info for the state when hovered
     tooltip.classed('visible', true)
       .html(
-        `<strong>${d.abbr}</strong><br>` +
+        `<strong>${abbr_to_state_name[d.abbr] || d.abbr}</strong><br>` +
         `${val != null ? mode.value_format(val) + ' ' + mode.tooltip_unit : 'No data'}<br>` +
-        `<span style="color:${law_colors[cat] || '#999'}">${law_labels[cat] || cat}</span>`
+        `<span>${law_labels[cat] || cat}</span>`
       );
   });
 
@@ -476,7 +496,7 @@ function update_top_states() {
   top_5.forEach((s, i) => {
     html += `<div class="sidebar-item">
       <span class="sidebar-rank">${i + 1}</span>
-      <span class="sidebar-state">${s.abbr}</span>
+      <span class="sidebar-state">${abbr_to_state_name[s.abbr] || s.abbr}</span>
       <span class="sidebar-value">${mode.value_format(s.val)}</span>
     </div>`;
   });
