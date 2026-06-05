@@ -28,7 +28,7 @@ const fill_modes = {
   'labor-force': {
     label: 'Labor Force',
     legend_title: 'Labor force participation',
-    tooltip_unit: '% participation',
+    tooltip_unit: 'participation',
     value_format: v => v.toFixed(1) + '%',
     sidebar_heading: 'Top 5 Highest Labor Force Participation',
     sidebar_note: 'Share of working-age women in the labor force (employed or actively seeking work). Source: FRED.'
@@ -36,7 +36,7 @@ const fill_modes = {
   'education': {
     label: 'Education',
     legend_title: "Women with bachelor's degree",
-    tooltip_unit: '% with bachelors',
+    tooltip_unit: "with bachelor's",
     value_format: v => v.toFixed(1) + '%',
     sidebar_heading: "Top 5 Highest Bachelor's Attainment",
     sidebar_note: "Share of women aged 25+ with a bachelor's degree or higher. Static 2020 snapshot — does not vary by year yet."
