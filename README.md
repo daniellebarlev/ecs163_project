@@ -9,15 +9,24 @@ The visualization is a heat map of the United States including
 - A static snapshot section that compares the start of the dataset 1995, through 2008, and 2002 as political turning points.
 ## Project Structure
 ```text
-├── index.html                /M# Main page layout and HTML structure
-├── style.css                 //  All styles, colors, layout, legend, tooltips, and historical snapshots
-├── map.js                    //  Core D3 visualization logic (interactive map + static historical snapshots)
-├── main.js                   //  Data loading entry point, gets CSVs and calls map.js
+.
+├── index.html
+├── style.css
+├── map.js
+├── main.js
 └── data/
-    ├── ECS163Project.R   /// R# R script for cleaning and merging the raw source data
-    ├─final_natality_data.csv   //  Cleaned CDC natality data (output of R script)
-    └── final_labor_fordata sv   v # Cleaned FRED labor force d
+    ├── ECS163Project.R
+    ├── final_natality_data.csv
+    └── final_labor_force_data.csv
 ```
+
+- **index.html** — Main page layout and HTML structure
+- **style.css** — Styling, colors, layout, legends, tooltips, and historical snapshots
+- **map.js** — Core D3 visualization logic (interactive map and historical snapshots)
+- **main.js** — Loads datasets and initializes visualizations
+- **ECS163Project.R** — Cleans and merges raw source data
+- **final_natality_data.csv** — Processed CDC natality data
+- **final_labor_force_data.csv** — Processed FRED labor force data
 ## Data Sources
 1. CDC Wonder Natality Data
 - File Created: final_natality_data.csv
