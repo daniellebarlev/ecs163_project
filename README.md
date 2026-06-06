@@ -20,13 +20,13 @@ The visualization is a heat map of the United States including
     └── final_labor_force_data.csv
 ```
 
-- **index.html** — Main page layout and HTML structure
-- **style.css** — Styling, colors, layout, legends, tooltips, and historical snapshots
-- **map.js** — Core D3 visualization logic (interactive map and historical snapshots)
-- **main.js** — Loads datasets and initializes visualizations
-- **ECS163Project.R** — Cleans and merges raw source data
-- **final_natality_data.csv** — Processed CDC natality data
-- **final_labor_force_data.csv** — Processed FRED labor force data
+- **index.html**: Main page layout and HTML structure
+- **style.css**: Styling, colors, layout, legends, tooltips, and historical snapshots
+- **map.js**: Core D3 visualization logic (interactive map and historical snapshots)
+- **main.js**: Loads datasets and initializes visualizations
+- **ECS163Project.R**: Cleans and merges raw source data
+- **final_natality_data.csv**: Processed CDC natality data
+- **final_labor_force_data.csv**: Processed FRED labor force data
 ## Data Sources
 1. CDC Wonder Natality Data
 - File Created: final_natality_data.csv
