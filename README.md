@@ -9,14 +9,14 @@ The visualization is a heat map of the United States including
 - A static snapshot section that compares the start of the dataset 1995, through 2008, and 2002 as political turning points.
 ## Project Structure
 ```text
-├── index.html                //  M# Main page layout and HTML structure
+├── index.html                /M# Main page layout and HTML structure
 ├── style.css                 //  All styles, colors, layout, legend, tooltips, and historical snapshots
 ├── map.js                    //  Core D3 visualization logic (interactive map + static historical snapshots)
 ├── main.js                   //  Data loading entry point, gets CSVs and calls map.js
 └── data/
-    ├── ECS163Project.R      /R# R script for cleaning and merging the raw source data
+    ├── ECS163Project.R   /// R# R script for cleaning and merging the raw source data
     ├─final_natality_data.csv   //  Cleaned CDC natality data (output of R script)
-    └── final_labor_force_a.csv  //  v # Cleaned FRED labor force data (output of R sptcri
+    └── final_labor_fordata sv   v # Cleaned FRED labor force d
 ```
 ## Data Sources
 1. CDC Wonder Natality Data
@@ -35,7 +35,6 @@ The R script harmonizes all the csv files
 - Additions for the full Law Atlas dataset is one of the possible improvements
 ## Data Cleaning
 - Data cleaning documentation can be found here: [Data Cleaning Documentation](https://docs.google.com/document/d/1AIRKfxMM1eNJDtPFeTcF6zDW4Fc6d2XHnLKaXUT3PzE/edit?usp=sharing)
-## Visulizations (map.js)
 # Interactive Map
 - Built with D3.js
 - Uses a tile grid layout so all states are represent equally regardless of political standing.
