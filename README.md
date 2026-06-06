@@ -1,4 +1,4 @@
-# 50 Years of U.S. (In)Fertility
+# 30 Years of U.S. (In)Fertility
 Understanding the relationship between birth rates, women's labor force participtation, and abortion policy across the United States.
 ## Overview
 This is an interactive data visualization exploring how major changes in abortion law, specficially Roe v. Wade and the reversal Dobbs v. Jackson relate to the birth rates and labor force participation in all 50 US states from 1995-2024.
